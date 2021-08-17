@@ -1,9 +1,8 @@
 # Python program to implement server side of chat room.
 import socket
-import select
+import logging
 import sys
 from _thread import start_new_thread
-
 
 """The first argument AF_INET is the address domain of the
 socket. This is used when we have an Internet Domain with
@@ -14,15 +13,16 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 # checks whether sufficient arguments have been provided
-if len(sys.argv) != 3:
-    print("Correct usage: script, IP address, port number")
-    exit()
+
+if len(sys.argv) < 2:
+    ip_port = "0.0.0.0:8004"
+else:
+    ip_port = sys.argv
 
 # takes the first argument from command prompt as IP address
-IP_address = str(sys.argv[1])
-
+IP_address, port = ip_port.split(":")
+Port = int(port)
 # takes second argument from command prompt as port number
-Port = int(sys.argv[2])
 
 """
 binds the server to an entered IP address and at the
@@ -42,11 +42,12 @@ list_of_clients = []
 
 def clientthread(conn, addr):
     # sends a message to the client whose user object is conn
-    conn.send("Welcome to this chatroom!")
+    conn.send(b"Welcome to this chatroom!\n")
 
     while True:
         try:
-            message = conn.recv(2048)
+            message = str(conn.recv(2048), 'utf-8')
+
             if message:
 
                 """prints the message and address of the
@@ -63,7 +64,8 @@ def clientthread(conn, addr):
                 is broken, in this case we remove the connection"""
                 remove(conn)
 
-        except:
+        except Exception as e:
+            logging.error(e)
             continue
 
 
@@ -76,12 +78,14 @@ def broadcast(message, connection):
     for clients in list_of_clients:
         if clients != connection:
             try:
-                clients.send(message)
-            except:
+                clients.send(bytes(message,'utf-8'))
+            except Exception as e:
+                logging.error(e)
                 clients.close()
 
                 # if the link is broken, we remove the client
                 remove(clients)
+                print("Client Closed & Removed")
 
 
 """The following function simply removes the object
@@ -93,6 +97,8 @@ def remove(connection):
     if connection in list_of_clients:
         list_of_clients.remove(connection)
 
+
+print("Server starts at", ip_port)
 
 while True:
     """Accepts a connection request and stores two parameters,
