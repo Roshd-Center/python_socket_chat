@@ -100,23 +100,30 @@ def remove(connection):
 
 print("Server starts at", ip_port)
 
-while True:
-    """Accepts a connection request and stores two parameters,
-    conn which is a socket object for that user, and addr
-    which contains the IP address of the client that just
-    connected"""
-    conn, addr = server.accept()
 
-    """Maintains a list of clients for ease of broadcasting
-    a message to all available people in the chatroom"""
-    list_of_clients.append(conn)
+try:
+    while True:
+        """Accepts a connection request and stores two parameters,
+        conn which is a socket object for that user, and addr
+        which contains the IP address of the client that just
+        connected"""
 
-    # prints the address of the user that just connected
-    print(addr[0] + " connected")
+        conn, addr = server.accept()
 
-    # creates and individual thread for every user
-    # that connects
-    start_new_thread(clientthread, (conn, addr))
+        """Maintains a list of clients for ease of broadcasting
+        a message to all available people in the chatroom"""
+        list_of_clients.append(conn)
 
-conn.close()
-server.close()
+        # prints the address of the user that just connected
+        print(addr[0] + " connected")
+
+        # creates and individual thread for every user
+        # that connects
+        start_new_thread(clientthread, (conn, addr))
+except KeyboardInterrupt:
+    print("Closing server...")
+    if 'conn' in locals(): conn.close()
+    server.close()
+
+
+
